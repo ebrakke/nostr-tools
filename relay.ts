@@ -9,6 +9,7 @@ type RelayEvent = {
   disconnect: () => void | Promise<void>
   error: () => void | Promise<void>
   notice: (msg: string) => void | Promise<void>
+  auth: (challenge: string) => void | Promise<void>
 }
 type SubEvent = {
   event: (event: Event) => void | Promise<void>
@@ -70,7 +71,8 @@ export function relayInit(
     connect: [],
     disconnect: [],
     error: [],
-    notice: []
+    notice: [],
+    auth: []
   }
   var subListeners: {
     [subid: string]: {[TK in keyof SubEvent]: SubEvent[TK][]}
@@ -178,6 +180,10 @@ export function relayInit(
             case 'NOTICE':
               let notice = data[1]
               listeners.notice.forEach(cb => cb(notice))
+              return
+            case 'AUTH':
+              let challenge = data[1]
+              listeners.auth.forEach(cb => cb(challenge))
               return
           }
         } catch (err) {
@@ -336,7 +342,7 @@ export function relayInit(
     },
     connect,
     close(): void {
-      listeners = {connect: [], disconnect: [], error: [], notice: []}
+      listeners = {connect: [], disconnect: [], error: [], notice: [], auth: []}
       subListeners = {}
       pubListeners = {}
       if (ws.readyState === WebSocket.OPEN) {
